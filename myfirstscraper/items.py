@@ -8,5 +8,3 @@ class ProductPhoneItem(scrapy.Item):
     name = scrapy.Field()
     price = scrapy.Field()
     vendor = scrapy.Field()
-
-
