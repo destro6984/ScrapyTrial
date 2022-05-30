@@ -1,44 +1,33 @@
 import json
 
-import scrapy
+from myfirstscraper.items import ProductItemLoader
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
 
 from myfirstscraper.items import ProductPhoneItem
 
 
-class Product(scrapy.Item):
-    name = scrapy.Field()
-    price = scrapy.Field()
-    vendor = scrapy.Field()
-
-
-class KompSpider(scrapy.Spider):
-    name = "komputronik"
+class SpiderKomp(CrawlSpider):
+    name = "autokomp"
+    allowed_domains = ["komputronik.pl"]
     start_urls = ["https://www.komputronik.pl/category/1596/telefony.html"]
 
-    def parse(self, response):
-        for product_href in response.css(
-            "ul.product-entry2-wrap li a.blank-link::attr(href)"
-        ).getall():
-            yield response.follow(product_href, self.parse_product)
+    rules = [
+        Rule(LinkExtractor(allow=[r"p=\d+"])),
+        Rule(LinkExtractor(allow=["product"]), follow=False, callback="parse_item"),
+    ]
 
-        next_page = response.css("div.sp-top-grey i.icon-caret2-right").get()
+    def parse_start_url(self, response):
+        return [f"{self.start_urls[0]}/?p=1"]
 
-        if next_page is not None:
-            page_number = response.css("li.pgn-active a::text").get()
-
-            url = f"{self.start_urls[0]}/?p={int(page_number) + 1}"
-
-            yield response.follow(url, callback=self.parse)
-
-    def parse_product(self, response):
-        phone = ProductPhoneItem()
+    def parse_item(self, response):
         get_json_with_brand = (
             response.xpath('//script[contains(text(),"brand")]/text()').get().strip()
         )
-        json_data = json.loads(get_json_with_brand)
-        phone["name"] = (
-            response.css("section#p-inner-name h1::text").get(default="").strip()
-        )
-        phone["price"] = json_data.get("offers", {}).get("price", "notfound")
-        phone["vendor"] = json_data.get("brand", {}).get("name", "notfound")
-        yield phone
+        json_data = json.loads(get_json_with_brand) if get_json_with_brand else {}
+
+        loader = ProductItemLoader(item=ProductPhoneItem(), response=response)
+        loader.add_css("name", "section#p-inner-name h1::text")
+        loader.add_value("price", json_data)
+        loader.add_value("vendor", json_data)
+        yield loader.load_item()
