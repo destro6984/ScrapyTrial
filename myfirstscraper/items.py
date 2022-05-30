@@ -1,10 +1,8 @@
-# See documentation in:
-# https://docs.scrapy.org/en/latest/topics/items.html
-
 import scrapy
+from itemloaders.processors import TakeFirst,MapCompose
 
 
 class ProductPhoneItem(scrapy.Item):
-    name = scrapy.Field()
-    price = scrapy.Field()
-    vendor = scrapy.Field()
+    name = scrapy.Field(input_processor=MapCompose(str.strip), output_processor=TakeFirst())
+    price = scrapy.Field(output_processor=TakeFirst())
+    vendor = scrapy.Field(output_processor=TakeFirst())
