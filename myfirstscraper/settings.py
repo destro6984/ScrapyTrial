@@ -1,4 +1,3 @@
-
 BOT_NAME = "myfirstscraper"
 
 SPIDER_MODULES = ["myfirstscraper.spiders"]
@@ -89,9 +88,5 @@ DOWNLOADER_MIDDLEWARES = {
 
 
 FEEDS = {
-    'items.csv': {
-        'format': 'json',
-        'encoding': 'utf8',
-        'overwrite': True
-    },
+    "items.csv": {"format": "json", "encoding": "utf8", "overwrite": True},
 }
